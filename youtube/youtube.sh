@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 
-VERSION="1.0"
-LOG_FILE="$HOME/YouTubeLauncher.log"
+APPNAME="YouTube"
+APPURL="https://youtube.com/"
+VERSION="1.1"
+LOG_DIR="$(dirname "$0")/../logs"
+LOG_FILE="$LOG_DIR/$APPNAME.log"
+
+# Ensure the logs directory exists
+mkdir -p "$LOG_DIR"
 
 # Log output
 exec 1>"${LOG_FILE}" 2>&1
 
-echo "Launching YouTube - VERSION $VERSION"
+echo "Launching $APPNAME - VERSION $VERSION"
 
-# Ensure Flatpak is available
-command -v flatpak >/dev/null 2>&1 || {
-    echo "ERROR: Flatpak not found. Please install Flatpak and try again.";
-    exit 1;
-}
+# Ensure that Chrome flatpak is installed
+if ! flatpak list | grep -q "com.google.Chrome"; then
+    echo "ERROR: Chrome Flatpak not installed!"
+    exit 1
+fi
 
 # Grant Chrome access to udev for controller/multimedia support
 flatpak --user override --filesystem=/run/udev:ro com.google.Chrome
@@ -21,4 +27,8 @@ flatpak --user override --filesystem=/run/udev:ro com.google.Chrome
 flatpak run --branch=stable --arch=x86_64 --command=/app/bin/chrome --file-forwarding com.google.Chrome @@u @@ \
 --kiosk \
 --start-fullscreen \
---app=https://youtube.com/tv
+--app=$APPURL
+
+ret=$?
+echo "$(date '+%Y-%m-%d %H:%M:%S') - $APPNAME exited with code $ret"
+exit $ret
